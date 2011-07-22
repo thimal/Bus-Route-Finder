@@ -1,8 +1,10 @@
 Administrivia - TJ
-0. Minimum PHP version: 5.1, 5.3.x preferred. [Additions not guaranteed to work with PHP 4.x]
-1. Moved license boilerplate for all new source to a separate file
-2. Refactoring code to use parameterized PDO. Reason: I don't like injections, especially of SQL. Also, speed.
-
+1. Minimum PHP 5.1, prefer 5.3. Support for PHP 4.x is not guranteed
+2. Moved license boilerplate to a separate file
+3. Added PDO based DB connection class
+4. Refactored ext/mysql style function calls into PDO paramterized queries (full version only)
+5. Added query counter (full version only)
+6. Formatting: cuddled if/else and function calls
 
 -----
 This is the repo for Janith's Sri Lankan Bus Routes project. I'm hosting it for him, let's see how far we can take this - John

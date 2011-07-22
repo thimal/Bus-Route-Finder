@@ -1,5 +1,6 @@
 <?php
 
+require('DBConnection.php');
 /******************************************************************************************
 
 	Colombo Bus Route Finder by Janith Leanage (http://janithl.blogspot.com).
@@ -22,9 +23,7 @@
 ******************************************************************************************/
 
 // Main Function
-
-$link = mysql_connect ("localhost", "root", "");
-mysql_select_db ("bus", $link);
+$DBConnection = new DBConnection();
 
 $chovers = array(27, 5, 7, 31, 28, 29, 2, 32, 37, 10, 41, 35, 34, 100, 90, 101, 53, 252, 45, 282, 284, 231, 235, 207, 204, 281); // change over points
 
@@ -243,44 +242,30 @@ function level3($from, $to)
 
 // Returns halt number of a halt
 
-function haltNo($bid, $pid)
-{
-	global $link;
+function haltNo($bid, $pid) {	
+	global $DBConnection;
+	
+	$resultset = $DBConnection->query("select bid, pid, stopNo from stop as s where s.pid = :placeid and s.bid = :busid", 
+			array(':placeid' => $pid, ':busid' => $bid));
 
-	$sql_query = <<<SQL
-SELECT * 
-FROM stop AS s
-WHERE s.pid = $pid AND s.bid = $bid;
-
-SQL;
-
-	if(($halt = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($halt)) > 0)
-	{
-		$haltdet = mysql_fetch_array($halt);
-		return $haltdet[2];
+	if($resultset) {
+		$halt = $resultset->fetch();
+		return $halt[2];
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }	
 
 // Returns place name when given place id
 
-function place($pid)
-{
-	global $link;
+function place($pid) {
+	global $DBConnection;
 
-	$sql_query = <<<SQL
-SELECT * 
-FROM place AS p
-WHERE p.pid = $pid;
+	$resultset = $DBConnection->query("SELECT * FROM place AS p WHERE p.pid = :placeid", array(':placeid' => $pid));
 
-SQL;
-
-	if(($place = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($place)) > 0)
-	{
-		$place_details = mysql_fetch_array($place);
+	if($resultset) {
+		$place_details = $resultset->fetch();
 		return $place_details[1];
 	}
 	else
@@ -291,23 +276,15 @@ SQL;
 
 // Returns all details on any busID
 
-function busDet($busid)
-{
-	global $link;
+function busDet($busid) {
+	global $DBConnection;
 
-	$sql_query = <<<SQL
-SELECT * 
-FROM bus AS b
-WHERE b.busid = $busid;
+	$resultset = $DBConnection->query("SELECT * FROM bus AS b WHERE b.busid = :busid", array(':busid' => $busid));
 
-SQL;
-
-	if(($bus = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($bus)) > 0)
-	{
-		return mysql_fetch_array($bus);
+	if($resultset) {
+		return $resultset->fetch();
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
@@ -315,51 +292,32 @@ SQL;
 // Function to find a bus link from location A to 
 // location B (a bus that travels in the correct direction)
 	
-function findLink($from, $to)
-{
+function findLink($from, $to) {
+	global $DBConnection;
+	
+	$resultset = $DBConnection->query("SELECT * FROM stop AS s1 WHERE s1.pid = :to AND s1.bid IN ( SELECT s2.bid FROM stop AS s2 WHERE s2.pid = :from AND s2.stopNo < s1.stopNo )", array(':to' => $to, ':from' => $from));
 
-	global $link;
-
-	$sql_query = <<<SQL
-SELECT * 
-FROM stop AS s1
-WHERE s1.pid = $to
-AND s1.bid IN ( SELECT s2.bid
-		FROM stop AS s2
-		WHERE s2.pid = $from AND s2.stopNo < s1.stopNo );
-SQL;
-
-	if(($bus = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($bus)) > 0)
-	{
-		return mysql_fetch_array($bus);
+	if($resultset) {
+		return $resultset->fetch();
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
 
 // Geolocation using Google Maps
 
-function geolocate($place)
-{
-	global $link;
+function geolocate($place) {
+	global $DBConnection;
+	
+	$resultset = $DBConnection->query("SELECT p.loc, p.desc FROM place AS p WHERE p.pid = :place AND p.loc IS NOT NULL", array(':place' => $place));
 
-	$sql_query = <<<SQL
-SELECT p.loc, p.desc
-FROM place AS p
-WHERE p.pid = $place
-AND p.loc IS NOT NULL;
-SQL;
-
-	if(($geo = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($geo)) > 0)
-	{
-		$gloc = mysql_fetch_array($geo);
+	if($resultset) {
+		$gloc = $resultset->fetch();
 
 		return '<a class="gmap" title="'.$gloc[1].'" href="http://maps.google.com/maps/api/staticmap?size=320x320&markers=size:mid|color:blue|'.$gloc[0].'|&mobile=true&sensor=false"><img src="img/geo.png" id="geo"/></a>';
 	}
-	else
-	{
+	else {
 		return '';
 	}
 }
@@ -488,10 +446,10 @@ OUT;
 
 // Function to display the bottom of the output
 
-function tail()
-{
-	if(isset($_GET['v']))
-	{
+function tail() {	
+	global $DBConnection;
+	$query_count = $DBConnection->get_querycount();
+	if(isset($_GET['v'])) {
 		echo <<< OUT
 </div>
 <br/>
@@ -502,14 +460,14 @@ function tail()
 </html>
 OUT;
 	}
-	else
-	{
-
+	else {
+	
 		echo <<< OUT
 <a  href="index.php"><button type="button">Go Back</button></a>
 </div>
 <div id="footer">
 <p>Disclaimer: This service is still in the beta stage, so please use it at your own risk.</p>
+<p size="small"> ($query_count queries)</p>
 </div>
 </body>
 </html>
