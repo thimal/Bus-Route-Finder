@@ -1,6 +1,7 @@
 <?php
-
 require('DBConnection.php');
+require('utils.php');
+
 /******************************************************************************************
 
 	Colombo Bus Route Finder by Janith Leanage (http://janithl.blogspot.com).
@@ -307,13 +308,17 @@ function findLink($from, $to) {
 
 // Geolocation using Google Maps
 
-function geolocate($place) {
+function geolocate($place, $unformatted = false) {
 	global $DBConnection;
 	
 	$resultset = $DBConnection->query("SELECT p.loc, p.desc FROM place AS p WHERE p.pid = :place AND p.loc IS NOT NULL", array(':place' => $place));
 
 	if($resultset) {
 		$gloc = $resultset->fetch();
+		
+		if ($unformatted) {
+			return $gloc[0];
+		}
 
 		return '<a class="gmap" title="'.$gloc[1].'" href="http://maps.google.com/maps/api/staticmap?size=320x320&markers=size:mid|color:blue|'.$gloc[0].'|&mobile=true&sensor=false"><img src="img/geo.png" id="geo"/></a>';
 	}
@@ -502,15 +507,19 @@ OUT;
 		}
 		else
 		{
+		list($from_latitude, $from_longitude) = Utils::parse_geo(geolocate($from, true));
+		list($to_latitude, $to_longitude) = Utils::parse_geo(geolocate($to, true));
 
+		$distance = sprintf("%2.2f", Utils::compute_distance ($from_latitude, $from_longitude, $to_latitude, $to_longitude));
 		echo <<< OUT
 <ul id="stops">	
 	<li id="le"><div id="route">$bus[1]</div></li>
 	<li id="le"><h3>Bus Start</h3><br/>$bus[2]</li>
 	<li id="le">$fgeo<h3>Get on at</h3><br/>$name1</li>
 	<li id="le">$tgeo<h3>Get off at</h3><br/>$name2</li>
-	<li id="le"><h3>Bus End</h3><br/>$bus[3]</li>
-	<li><h3>No. of halts</h3><br/>$nstops</li>
+	<li id="le"><h3>Bus End</h3><br/>$bus[3]</li>	
+	<li><h3>No. of halts (distance)</h3><br/>$nstops ($distance km)</li>
+	
 </ul>
 OUT;
 
