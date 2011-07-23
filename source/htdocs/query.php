@@ -28,34 +28,28 @@ $DBConnection = new DBConnection();
 
 $chovers = array(27, 5, 7, 31, 28, 29, 2, 32, 37, 10, 41, 35, 34, 100, 90, 101, 53, 252, 45, 282, 284, 231, 235, 207, 204, 281); // change over points
 
-if(isset($_GET['t']) && isset($_GET['f']))
-{
+if(isset($_GET['t']) && isset($_GET['f'])) {
 	$pat = "/[^0-9]/";
 	
 	$to = preg_replace($pat, "", $_GET['t']);
 	$from = preg_replace($pat, "", $_GET['f']);
 
-	if($to == $from)
-	{
+	if($to == $from) {
 		error("Error!", "You have set the same location as the source and destination.");
 	}
-	elseif(is_numeric($to) && is_numeric($from) && ($to + $from) < 999999)
-	{
+	elseif(is_numeric($to) && is_numeric($from) && ($to + $from) < 999999) {
 		if(level1($from, $to) == true)		{ }
 		elseif(level2($from, $to) == true)	{ }
 		elseif(level3($from, $to) == true)	{ }
-		else
-		{
+		else {
 			error("Route 404: Bus Not Found!", "We're extremely sorry, but your destination is unreachable using 3 buses or less. We suggest you take a trishaw or taxi to get to your destination.");
 		}		
 	}
-	else
-	{
+	else {
 		error("Error!", "There is a problem with your input. Please use the dropdown menu to select locations.");
 	}			
 }
-else
-{
+else {
 	error("Error!", "There is an issue with your query. Make sure that you have entered your starting location and your destination.");
 }
 
@@ -68,10 +62,8 @@ else
 
 // Level 1 - Go from location A to B using one bus
 
-function level1($from, $to)
-{
-	if(($details = findLink($from, $to)) != false)
-	{
+function level1($from, $to) {
+	if(($details = findLink($from, $to)) != false) {
 		// Data
 		$busid = $details[0];
 		$halt2 = $details[2];
@@ -90,8 +82,7 @@ function level1($from, $to)
 
 		return true;
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
@@ -99,20 +90,16 @@ function level1($from, $to)
 // Level 2 - Go from location A to B using two buses and 
 // select the bus combination with the minimum number of halts
 
-function level2($from, $to)
-{
+function level2($from, $to) {
 
 	global $chovers;
 
 	$min_halt = 9999;
 	$busid1; $busid2; $name1; $name2; $name3; $nstops1; $nstops2;
 	
-	foreach ($chovers as $value) 
-	{
-		if(($bus1 = findLink($from, $value)) != false)
-		{
-			if(($bus2 = findLink($value, $to)) != false)
-			{
+	foreach ($chovers as $value) {
+		if(($bus1 = findLink($from, $value)) != false)	{
+			if(($bus2 = findLink($value, $to)) != false) {
 				$halt2 = $bus1[2];
 				$halt1 = haltNo($bus1[0], $from);
 				$ns1 = $halt2 - $halt1;			//halts from start to changeover
@@ -121,8 +108,7 @@ function level2($from, $to)
 				$halt3 = haltNo($bus2[0], $value);
 				$ns2 = $halt4 - $halt3;			//halts from changeover to dest
 
-				if(($ns1 + $ns2) < $min_halt)
-				{
+				if(($ns1 + $ns2) < $min_halt) {
 
 					// Data and calculations
 					$busid1 = $bus1[0];
@@ -139,8 +125,7 @@ function level2($from, $to)
 		}
 	}
 
-	if($min_halt < 9999)
-	{
+	if($min_halt < 9999) {
 		$name1 = place($from);			//halt name from
 		$name2 = place($to);			//halt name to
 
@@ -152,8 +137,7 @@ function level2($from, $to)
 
 		return true;
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
@@ -161,24 +145,18 @@ function level2($from, $to)
 // Level 3 - Go from location A to B using three buses and 
 // select the bus combination with the minimum number of halts
 
-function level3($from, $to)
-{
+function level3($from, $to) {
 
 	global $chovers;
 
 	$min_halt = 9999;
 	$busid1; $busid2; $busid3; $name1; $name2; $name3; $name4; $nstops1; $nstops2; $nstops3;
 	
-	foreach($chovers as $x) 
-	{
-		if(($bus1 = findLink($from, $x)) != false)
-		{
-			foreach($chovers as $y)
-			{
-				if(($x != $y) && (($bus2 = findLink($x, $y)) != false))
-				{
-					if(($bus3 = findLink($y, $to)) != false)
-					{
+	foreach($chovers as $x) {
+		if(($bus1 = findLink($from, $x)) != false) {
+			foreach($chovers as $y)	{
+				if(($x != $y) && (($bus2 = findLink($x, $y)) != false))	{
+					if(($bus3 = findLink($y, $to)) != false) {
 						$halt2 = $bus1[2];
 						$halt1 = haltNo($bus1[0], $from);
 						$ns1 = $halt2 - $halt1;			//halts from start to changeover 1
@@ -191,8 +169,7 @@ function level3($from, $to)
 						$halt5 = haltNo($bus3[0], $y);
 						$ns3 = $halt6 - $halt5;			//halts from changeover 2 to destination
 
-						if(($ns1 + $ns2 + $ns3) < $min_halt)
-						{
+						if(($ns1 + $ns2 + $ns3) < $min_halt) {
 
 							// Data and calculations
 							$busid1 = $bus1[0];
@@ -214,8 +191,7 @@ function level3($from, $to)
 		}
 	}
 
-	if($min_halt < 9999)
-	{
+	if($min_halt < 9999) {
 		$name1 = place($from);			//halt name from
 		$name2 = place($to);			//halt name to
 
@@ -228,8 +204,7 @@ function level3($from, $to)
 
 		return true;
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
@@ -269,8 +244,7 @@ function place($pid) {
 		$place_details = $resultset->fetch();
 		return $place_details[1];
 	}
-	else
-	{
+	else {
 		return false;
 	}
 }
@@ -335,11 +309,9 @@ function geolocate($place, $unformatted = false) {
 
 // Function to display errors
 
-function error($heading, $message)
-{
+function error($heading, $message) {
 
-	if(isset($_GET['v']))
-	{
+	if(isset($_GET['v'])) {
 		echo <<< OUT
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
@@ -357,8 +329,7 @@ function error($heading, $message)
 </html>
 OUT;
 	}
-	else
-	{
+	else {
 
 		echo <<< OUT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -393,10 +364,8 @@ OUT;
 
 // Function to display the top of the output html
 
-function head($heading)
-{
-	if(isset($_GET['v']))
-	{
+function head($heading) {
+	if(isset($_GET['v'])) {
 		echo <<< OUT
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
@@ -410,8 +379,7 @@ function head($heading)
 <div>
 OUT;
 	}
-	else
-	{
+	else {
 
 		echo <<< OUT
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -487,27 +455,24 @@ OUT;
 function display($busid, $from, $to, $nstops)
 {
 
-	$name1 = place($from);			//halt name from
-	$name2 = place($to);			//halt name to
+	$name1 = place($from);			// halt name from
+	$name2 = place($to);			// halt name to
 	
-	if($to > 200 || $from > 200)		//approximate nstops for long distances
-	{
+	if($to > 200 || $from > 200) {	// approximate nstops for long distances
+	
 		$nstops = 'More than '.$nstops;
 	}
 
-	if(($bus = busDet($busid)) != false)
-	{
+	if(($bus = busDet($busid)) != false) {
 		$tgeo = geolocate($to);
 		$fgeo = geolocate($from);
 
-		if(isset($_GET['v']))
-		{
+		if(isset($_GET['v'])) {
 			echo <<< OUT
 Take the <strong>$bus[1]</strong> ($bus[2] - $bus[3]) bus. Get on at $name1 ($fgeo) and get off at $name2 ($tgeo).<br/>
 OUT;
 		}
-		else
-		{
+		else {
 		list($from_latitude, $from_longitude) = Utils::parse_geo(geolocate($from, true));
 		list($to_latitude, $to_longitude) = Utils::parse_geo(geolocate($to, true));
 
@@ -529,4 +494,3 @@ OUT;
 }
 
 ?>
-
