@@ -454,6 +454,7 @@ OUT;
 function tail() {	
 	global $DBConnection;
 	$query_count = $DBConnection->get_querycount();
+	$time_spent = sprintf("%2.2f seconds", $DBConnection->get_exec_time());
 	if(isset($_GET['v'])) {
 		echo <<< OUT
 </div>
@@ -472,7 +473,7 @@ OUT;
 </div>
 <div id="footer">
 <p>Disclaimer: This service is still in the beta stage, so please use it at your own risk.</p>
-<p size="small"> ($query_count queries)</p>
+<p size="small"> ($query_count queries, $time_spent)</p>
 </div>
 </body>
 </html>

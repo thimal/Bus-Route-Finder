@@ -20,6 +20,7 @@ class DBConnection {
     private $dbpwd = '';
 
 	private $query_counter = 0; // statistics
+	private $total_time_expended = 0;
 	
 	public function __construct($conn = true) {
 		if ($conn) {
@@ -41,13 +42,19 @@ class DBConnection {
 
 	function query($sql, $params) {		
 		$this->query_counter++;
+		$start_time = microtime();
 		$statement = $this->db->prepare($sql);
 	    $result = $statement->execute($params);
+		$this->total_time_expended += (microtime() - $start_time);
 		return $result? $statement:$result;
 	}
 
 	function get_querycount() {
 		return $this->query_counter;   
+	}
+
+	function get_exec_time() {
+		return $this->total_time_expended;
 	}
 }
 
