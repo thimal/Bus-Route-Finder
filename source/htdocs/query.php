@@ -1,6 +1,8 @@
 <?php
 require('DBConnection.php');
 require('utils.php');
+require('route.php');
+require('routeoptions.php');
 
 /******************************************************************************************
 
@@ -25,6 +27,7 @@ require('utils.php');
 
 // Main Function
 $DBConnection = new DBConnection();
+$RouteOptions = new RouteOptions();
 
 $chovers = array(27, 5, 7, 31, 28, 29, 2, 32, 37, 10, 41, 35, 34, 100, 90, 101, 53, 252, 45, 282, 284, 231, 235, 207, 204, 281); // change over points
 
@@ -63,6 +66,8 @@ else {
 // Level 1 - Go from location A to B using one bus
 
 function level1($from, $to) {
+	global $RouteOptions;
+
 	if(($details = findLink($from, $to)) != false) {
 		// Data
 		$busid = $details[0];
@@ -71,7 +76,13 @@ function level1($from, $to) {
 
 		// Data to be calculated
 		$nstops = $halt2 - $halt1;
-
+		
+		$route = new Route();
+		$route->set_start($from);
+		$route->set_destination($to);
+		$route->push_waypoint($to, $busid, $nstops);
+		$RouteOptions->add($route);
+	
 		$name1 = place($from);			//halt name from
 		$name2 = place($to);			//halt name to
 
@@ -91,22 +102,28 @@ function level1($from, $to) {
 // select the bus combination with the minimum number of halts
 
 function level2($from, $to) {
-
+	global $RouteOptions;
 	global $chovers;
 
 	$min_halt = 9999;
 	$busid1; $busid2; $name1; $name2; $name3; $nstops1; $nstops2;
-	
 	foreach ($chovers as $value) {
 		if(($bus1 = findLink($from, $value)) != false)	{
-			if(($bus2 = findLink($value, $to)) != false) {
+			if(($bus2 = findLink($value, $to)) != false) {				
 				$halt2 = $bus1[2];
 				$halt1 = haltNo($bus1[0], $from);
 				$ns1 = $halt2 - $halt1;			//halts from start to changeover
 
 				$halt4 = $bus2[2];
 				$halt3 = haltNo($bus2[0], $value);
-				$ns2 = $halt4 - $halt3;			//halts from changeover to dest
+				$ns2 = $halt4 - $halt3;			//halts from changeover to dest			
+
+				$route = new Route();
+				$route->set_start($from);
+				$route->set_destination($to);
+				$route->push_waypoint($value, $bus1[0], $ns1);
+				$route->push_waypoint($to, $bus2[0], $ns2);
+				$RouteOptions->add($route);
 
 				if(($ns1 + $ns2) < $min_halt) {
 
@@ -146,12 +163,11 @@ function level2($from, $to) {
 // select the bus combination with the minimum number of halts
 
 function level3($from, $to) {
-
+	global $RouteOptions;
 	global $chovers;
 
 	$min_halt = 9999;
-	$busid1; $busid2; $busid3; $name1; $name2; $name3; $name4; $nstops1; $nstops2; $nstops3;
-	
+	$busid1; $busid2; $busid3; $name1; $name2; $name3; $name4; $nstops1; $nstops2; $nstops3;	
 	foreach($chovers as $x) {
 		if(($bus1 = findLink($from, $x)) != false) {
 			foreach($chovers as $y)	{
@@ -168,6 +184,14 @@ function level3($from, $to) {
 						$halt6 = $bus3[2];
 						$halt5 = haltNo($bus3[0], $y);
 						$ns3 = $halt6 - $halt5;			//halts from changeover 2 to destination
+						
+						$route = new Route();
+						$route->set_start($from);
+						$route->set_destination($to);
+						$route->push_waypoint($x, $bus1[0], $ns1);
+						$route->push_waypoint($y, $bus2[0], $ns2);
+						$route->push_waypoint($to, $bus3[0], $ns3);
+						$RouteOptions->add($route);
 
 						if(($ns1 + $ns2 + $ns3) < $min_halt) {
 
@@ -421,8 +445,10 @@ OUT;
 
 function tail() {	
 	global $DBConnection;
+	global $RouteOptions;
 	$query_count = $DBConnection->get_querycount();
 	$time_spent = sprintf("%2.2f seconds", $DBConnection->get_exec_time());
+
 	if(isset($_GET['v'])) {
 		echo <<< OUT
 </div>
