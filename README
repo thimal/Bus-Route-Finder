@@ -5,6 +5,25 @@ Administrivia - TJ
 4. Refactored ext/mysql style function calls into PDO paramterized queries (full version only)
 5. Added query counter (full version only)
 6. Formatting: cuddled if/else and function calls
+7. Route class and RouteOptions, will allow for much easier route selection in future
+
+Route selection - notes
+----------------------
+* current implementation fixme: only considers hopcount after changeovers, optimal hopcount (with higher changeovers) never get seen
+* current implementation fixme: as expected, order of magnitude higher queries per level (~50 queries to ~750 queries from level2 to level 3)
+* current implementation fixme: hardcoded changeover points
+* current implementation fixme: changeover point selection is invariant, regardless of bus route selected
+* current implementation fixme: will probably not scale to 4, 5 changeovers [perhaps this isn't necessary?]
+
+options
+--------
+* classical routing will probably work, but will (at least initially) scale worse than the existing setup
+* A* - will need modifications to prevent zigzag, better weighting system required
+* Adjacency lists/Adjacency matrix of locations
+* Kosaraju modifier (to accommodate hopcounts/weights) to DFS
+* Spanning trees: MST with Prim's and Kruskal's algorithms (probably not a great choice, though)
+* Djikstra/critical path method
+* Bellman/Ford - need to check if this works in less than exponential time
 
 -----
 This is the repo for Janith's Sri Lankan Bus Routes project. I'm hosting it for him, let's see how far we can take this - John
