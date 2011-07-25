@@ -1,4 +1,5 @@
 <?php
+require('DBConnection.php');
 
 /******************************************************************************************
 
@@ -20,6 +21,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ******************************************************************************************/
+$DBConnection = new DBConnection();
 
 echo <<< OUT
 <?xml version="1.0" encoding="utf-8"?>
@@ -34,23 +36,15 @@ echo <<< OUT
 <form action="query.php" method="get" enctype="text/plain" autocomplete="off">
 OUT;
 
-$link = mysql_connect ("localhost", "root", "");
-mysql_select_db ("bus", $link);
-
-$sql_query = <<<SQL
-SELECT p.pid, p.name
-FROM place AS p
-ORDER BY p.name ASC;
-SQL;
-
 $options = '';
 
-if(($locs = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($locs)) > 0)
-{
-	while($array = mysql_fetch_array($locs))
-	{
-		$options .= '<option value="'.$array[0].'">'.$array[1].'</option>'."\n";
-	}
+$resultset = $DBConnection->query("SELECT p.pid, p.name FROM place AS p ORDER BY p.name ASC", array());
+if($resultset) {
+	while ($array = $resultset->fetch())
+	$options .= '<option value="'.$array[0].'">'.$array[1].'</option>'."\n";
+}
+else {
+	return false;
 }
 
 echo <<< OUT
@@ -66,7 +60,7 @@ $options
 </div>
 <br/>
 <div>Disclaimer: This service is still in the beta stage, so please use it at your own risk.<br/>
-<a href="index.php">Desktop Version</a></div>
+<a href="index.php">Desktop Version</a> ></div>
 </body>
 </html>
 OUT;
