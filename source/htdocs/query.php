@@ -262,7 +262,7 @@ function haltNo($bid, $pid) {
 function place($pid) {
 	global $DBConnection;
 
-	$resultset = $DBConnection->query("SELECT * FROM place AS p WHERE p.pid = :placeid", array(':placeid' => $pid));
+	$resultset = $DBConnection->query("SELECT pid, name, area, loc, description FROM place AS p WHERE p.pid = :placeid", array(':placeid' => $pid));
 
 	if($resultset) {
 		$place_details = $resultset->fetch();
@@ -278,7 +278,7 @@ function place($pid) {
 function busDet($busid) {
 	global $DBConnection;
 
-	$resultset = $DBConnection->query("SELECT * FROM bus AS b WHERE b.busid = :busid", array(':busid' => $busid));
+	$resultset = $DBConnection->query("SELECT busid, routeno, from_loc, to_loc FROM bus AS b WHERE b.busid = :busid", array(':busid' => $busid));
 
 	if($resultset) {
 		return $resultset->fetch();
@@ -294,7 +294,7 @@ function busDet($busid) {
 function findLink($from, $to) {
 	global $DBConnection;
 	
-	$resultset = $DBConnection->query("SELECT * FROM stop AS s1 WHERE s1.pid = :to AND s1.bid IN ( SELECT s2.bid FROM stop AS s2 WHERE s2.pid = :from AND s2.stopNo < s1.stopNo )", array(':to' => $to, ':from' => $from));
+	$resultset = $DBConnection->query("SELECT bid, pid, stopNo FROM stop AS s1 WHERE s1.pid = :to AND s1.bid IN ( SELECT s2.bid FROM stop AS s2 WHERE s2.pid = :from AND s2.stopNo < s1.stopNo )", array(':to' => $to, ':from' => $from));
 
 	if($resultset) {
 		return $resultset->fetch();
@@ -309,7 +309,7 @@ function findLink($from, $to) {
 function geolocate($place, $unformatted = false) {
 	global $DBConnection;
 	
-	$resultset = $DBConnection->query("SELECT p.loc, p.desc FROM place AS p WHERE p.pid = :place AND p.loc IS NOT NULL", array(':place' => $place));
+	$resultset = $DBConnection->query("SELECT p.loc, p.description FROM place AS p WHERE p.pid = :place AND p.loc IS NOT NULL", array(':place' => $place));
 
 	if($resultset) {
 		$gloc = $resultset->fetch();

@@ -28,8 +28,8 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 CREATE TABLE IF NOT EXISTS `bus` (
   `busid` int(11) NOT NULL AUTO_INCREMENT,
   `routeno` varchar(5) NOT NULL,
-  `from` varchar(20) NOT NULL,
-  `to` varchar(20) NOT NULL,
+  `from_loc` varchar(20) NOT NULL,
+  `to_loc` varchar(20) NOT NULL,
   PRIMARY KEY (`busid`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=132 ;
 
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `bus` (
 -- Dumping data for table `bus`
 --
 
-INSERT INTO `bus` (`busid`, `routeno`, `from`, `to`) VALUES
+INSERT INTO `bus` (`busid`, `routeno`, `from_loc`, `to_loc`) VALUES
 (1, '138', 'Pettah', 'Kottawa'),
 (2, '138', 'Pettah', 'Homagama'),
 (3, '138', 'Pettah', 'Maharagama'),
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS `place` (
   `name` varchar(36) NOT NULL,
   `area` varchar(10) NOT NULL,
   `loc` varchar(64) DEFAULT NULL,
-  `desc` varchar(200) DEFAULT NULL,
+  `description` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`pid`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=304 ;
 
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS `place` (
 -- Dumping data for table `place`
 --
 
-INSERT INTO `place` (`pid`, `name`, `area`, `loc`, `desc`) VALUES
+INSERT INTO `place` (`pid`, `name`, `area`, `loc`, `description`) VALUES
 (1, 'Pettah', 'Coast', '6.933211,79.855435', NULL),
 (2, 'Fort Railway Station', 'Coast', '6.934085,79.850221', NULL),
 (3, 'Lotus Road', 'Coast', '6.933978,79.846991', NULL),
