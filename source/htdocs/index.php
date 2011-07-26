@@ -1,4 +1,5 @@
 <?php
+require('DBConnection.php');
 
 /******************************************************************************************
 
@@ -20,6 +21,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ******************************************************************************************/
+$DBConnection = new DBConnection();
 
 echo <<< OUT
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -36,15 +38,7 @@ echo <<< OUT
 <script type="text/javascript" src="jquery/tags.js"></script>
 
 OUT;
-
-$link = mysql_connect ("localhost", "root", "");
-mysql_select_db ("bus", $link);
-
-$sql_query = <<<SQL
-SELECT p.pid, p.name
-FROM place AS p;
-
-SQL;
+$resultset = $DBConnection->query("select pid, name from place", array());
 
 echo <<<OUT
 <script type="text/javascript">
@@ -54,11 +48,9 @@ echo <<<OUT
             tags: ["
 OUT;
 
-if(($locs = mysql_query ($sql_query, $link)) != false && (mysql_num_rows($locs)) > 0)
-{
-	while($array = mysql_fetch_array($locs))
-	{
-		echo "${array[1]} (${array[0]})\",\"";
+if ($resultset) {
+	while ($row = $resultset->fetch()) {
+		echo "${row[1]} (${row[0]})\",\"";
 	}
 }
 
