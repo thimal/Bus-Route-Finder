@@ -2,11 +2,12 @@
 
 class DBUtils {
 
-public static function compute_alternatives ($RouteOptions) {
-	foreach ($RouteOptions->get_all_routes() as $route) {
+public static function compute_alternatives ($dbh, $RouteOptions) {	
+	foreach ($RouteOptions->get_alternative_routes() as $route) {
 		$waypoints = $route->get_waypoints();
 		foreach ($waypoints as $waypoint) {
-			print "{$waypoint->start} to {$waypoint->destination} in {$waypoint->hops} hops in bus {$waypoint->bus}";
+			$busDetails = DBUtils::busDet($dbh, $waypoint->bus);
+			print DBUtils::place($dbh, $waypoint->start) . " to " .  DBUtils::place($dbh, $waypoint->destination) . " in {$waypoint->hops} hops in bus $busDetails[1] from $busDetails[2] to $busDetails[3]";
 			print "<br />";
 		}
 		print " <br /> ===================== <br />";

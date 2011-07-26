@@ -11,7 +11,7 @@
 
 class RouteOptions {
 	private $routes;
-	private $optimal_route;
+	private $optimal_route;	
 	private $lowest_cost;
 
 	public function __construct() {
@@ -19,12 +19,17 @@ class RouteOptions {
 		$this->lowest_cost = 10000; // set to impossibly high value
 	}
 	
-	public function add($route) {
-		array_push($this->routes, $route);
+	public function add($route) {		
 		$total_waypoint_cost = $route->get_total_cost();
-		if ( $total_waypoint_cost < $this->lowest_cost) {
-			$this->optimal_route = $route;
+		if ( $total_waypoint_cost < $this->lowest_cost ) {
+			if (count($this->routes) != 0) {
+				array_push($this->routes, $this->optimal_route); // push the previous optimal route onto the stack
+			}
+			$this->optimal_route = $route;                   
 			$this->lowest_cost = $total_waypoint_cost;
+		}
+		else {
+			array_push($this->routes, $route);
 		}
 	}
 	
@@ -36,12 +41,14 @@ class RouteOptions {
 		return $this->lowest_cost;
 	}
 
-	public function get_changeover_count() {
-		return count($this->routes) - 1; // counts changeovers only, no start -> destination leg 
+	public function get_alternative_routes() {
+		return $this->routes;
 	}
 
 	public function get_all_routes() {
-		return $this->routes;
+		$routes = $this->routes;		
+		array_push($routes, $this->optimal_route);						
+		return $routes;
 	}
 }
 

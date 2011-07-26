@@ -362,7 +362,7 @@ function tail() {
 	$query_count = $DBConnection->get_querycount();
 	$time_spent = sprintf("%2.2f seconds", $DBConnection->get_exec_time());
 	
-	$alternatives = DBUtils::compute_alternatives($RouteOptions);
+	$alternatives = DBUtils::compute_alternatives($DBConnection, $RouteOptions);
 	if(isset($_GET['v'])) {
 		echo <<< OUT
 </div>
@@ -379,6 +379,7 @@ OUT;
 		echo <<< OUT
 <a  href="index.php"><button type="button">Go Back</button></a>
 </div>
+<br />
 <div id="alternatives">
 $alternatives
 </div>

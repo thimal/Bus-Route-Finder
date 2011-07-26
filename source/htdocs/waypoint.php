@@ -20,9 +20,7 @@ class Waypoint {
 		return isset($this->_data[$name]);
 	}
 
-	public function ___set($name, $value) {
-		die();
-		 echo "Setting '$name' to '$value'\n";
+	public function ___set($name, $value) {		 
 		if (isset($this->_allowed_keys[$name])) {
 			$this->_data[$name] = $value;
 		}
