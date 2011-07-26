@@ -1,4 +1,5 @@
 <?php
+require('routingrules.php');
 /******************************************************************************************
 	
 	Colombo Bus Route Finder by Janith Leanage (http://janithl.blogspot.com).
@@ -12,24 +13,26 @@
 class RouteOptions {
 	private $routes;
 	private $optimal_route;	
-	private $lowest_cost;
+	private $lowest_cost;	
 
 	public function __construct() {
 		$this->routes = array();
 		$this->lowest_cost = 10000; // set to impossibly high value
 	}
 	
-	public function add($route) {		
-		$total_waypoint_cost = $route->get_total_cost();
+	public function add($route) {
+		$routingrules = new RoutingRules();
+		$processed_route = $routingrules->apply_rules($route);
+		$total_waypoint_cost = $processed_route->get_total_cost();
 		if ( $total_waypoint_cost < $this->lowest_cost ) {
 			if (count($this->routes) != 0) {
 				array_push($this->routes, $this->optimal_route); // push the previous optimal route onto the stack
 			}
-			$this->optimal_route = $route;                   
+			$this->optimal_route = $processed_route;                   
 			$this->lowest_cost = $total_waypoint_cost;
 		}
 		else {
-			array_push($this->routes, $route);
+			array_push($this->routes, $processed_route);
 		}
 	}
 	
