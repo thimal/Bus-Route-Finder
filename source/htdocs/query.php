@@ -3,7 +3,7 @@ require('DBConnection.php');
 require('utils.php');
 require('route.php');
 require('routeoptions.php');
-
+require('dbutils.php');
 /******************************************************************************************
 
 	Colombo Bus Route Finder by Janith Leanage (http://janithl.blogspot.com).
@@ -67,8 +67,9 @@ else {
 
 function level1($from, $to) {
 	global $RouteOptions;
+	global $DBConnection;
 
-	if(($details = findLink($from, $to)) != false) {
+	if(($details = DBUtils::findLink($DBConnection, $from, $to)) != false) {
 		// Data
 		$busid = $details[0];
 		$halt2 = $details[2];
@@ -80,7 +81,7 @@ function level1($from, $to) {
 		$route = new Route();
 		$route->set_start($from);
 		$route->set_destination($to);
-		$route->push_waypoint($to, $busid, $nstops);
+		$route->push_waypoint($from, $to, $busid, $nstops);
 		$RouteOptions->add($route);
 	
 		$name1 = place($from);			//halt name from
@@ -102,27 +103,28 @@ function level1($from, $to) {
 // select the bus combination with the minimum number of halts
 
 function level2($from, $to) {
+	global $DBConnection;
 	global $RouteOptions;
 	global $chovers;
 
 	$min_halt = 9999;
 	$busid1; $busid2; $name1; $name2; $name3; $nstops1; $nstops2;
 	foreach ($chovers as $value) {
-		if(($bus1 = findLink($from, $value)) != false)	{
-			if(($bus2 = findLink($value, $to)) != false) {				
+		if(($bus1 = DBUtils::findLink($DBConnection, $from, $value)) != false)	{
+			if(($bus2 = DBUtils::findLink($DBConnection, $value, $to)) != false) {				
 				$halt2 = $bus1[2];
-				$halt1 = haltNo($bus1[0], $from);
+				$halt1 = DBUtils::haltNo($DBConnection, $bus1[0], $from);
 				$ns1 = $halt2 - $halt1;			//halts from start to changeover
 
 				$halt4 = $bus2[2];
-				$halt3 = haltNo($bus2[0], $value);
+				$halt3 = DBUtils::haltNo($DBConnection, $bus2[0], $value);
 				$ns2 = $halt4 - $halt3;			//halts from changeover to dest			
 
 				$route = new Route();
 				$route->set_start($from);
 				$route->set_destination($to);
-				$route->push_waypoint($value, $bus1[0], $ns1);
-				$route->push_waypoint($to, $bus2[0], $ns2);
+				$route->push_waypoint($from, $value, $bus1[0], $ns1);
+				$route->push_waypoint($value, $to, $bus2[0], $ns2);
 				$RouteOptions->add($route);
 
 				if(($ns1 + $ns2) < $min_halt) {
@@ -143,8 +145,8 @@ function level2($from, $to) {
 	}
 
 	if($min_halt < 9999) {
-		$name1 = place($from);			//halt name from
-		$name2 = place($to);			//halt name to
+		$name1 = DBUtils::place($DBConnection, $from);			//halt name from
+		$name2 = DBUtils::place($DBConnection, $to);			//halt name to
 
 		//Output
 		head("I want to go from $name1 to $name2");
@@ -163,15 +165,16 @@ function level2($from, $to) {
 // select the bus combination with the minimum number of halts
 
 function level3($from, $to) {
+	global $DBConnection;
 	global $RouteOptions;
 	global $chovers;
 
 	$min_halt = 9999;
 	$busid1; $busid2; $busid3; $name1; $name2; $name3; $name4; $nstops1; $nstops2; $nstops3;	
 	foreach($chovers as $x) {
-		if(($bus1 = findLink($from, $x)) != false) {
+		if(($bus1 = DBUtils::findLink($DBConnection, $from, $x)) != false) {
 			foreach($chovers as $y)	{
-				if(($x != $y) && (($bus2 = findLink($x, $y)) != false))	{
+				if(($x != $y) && (($bus2 = DBUtils::findLink($DBConnection, $x, $y)) != false))	{
 					if(($bus3 = findLink($y, $to)) != false) {
 						$halt2 = $bus1[2];
 						$halt1 = haltNo($bus1[0], $from);
@@ -188,9 +191,9 @@ function level3($from, $to) {
 						$route = new Route();
 						$route->set_start($from);
 						$route->set_destination($to);
-						$route->push_waypoint($x, $bus1[0], $ns1);
-						$route->push_waypoint($y, $bus2[0], $ns2);
-						$route->push_waypoint($to, $bus3[0], $ns3);
+						$route->push_waypoint($from, $x, $bus1[0], $ns1);
+						$route->push_waypoint($x, $y, $bus2[0], $ns2);
+						$route->push_waypoint($y, $to, $bus3[0], $ns3);
 						$RouteOptions->add($route);
 
 						if(($ns1 + $ns2 + $ns3) < $min_halt) {
@@ -234,96 +237,6 @@ function level3($from, $to) {
 }
 
 
-//////////////////////////////////////////////////
-//						//
-//		Database Functions		//
-//						//
-//////////////////////////////////////////////////
-
-// Returns halt number of a halt
-
-function haltNo($bid, $pid) {	
-	global $DBConnection;
-	
-	$resultset = $DBConnection->query("select bid, pid, stopNo from stop as s where s.pid = :placeid and s.bid = :busid", 
-			array(':placeid' => $pid, ':busid' => $bid));
-
-	if($resultset) {
-		$halt = $resultset->fetch();
-		return $halt[2];
-	}
-	else {
-		return false;
-	}
-}	
-
-// Returns place name when given place id
-
-function place($pid) {
-	global $DBConnection;
-
-	$resultset = $DBConnection->query("SELECT pid, name, area, loc, description FROM place AS p WHERE p.pid = :placeid", array(':placeid' => $pid));
-
-	if($resultset) {
-		$place_details = $resultset->fetch();
-		return $place_details[1];
-	}
-	else {
-		return false;
-	}
-}
-
-// Returns all details on any busID
-
-function busDet($busid) {
-	global $DBConnection;
-
-	$resultset = $DBConnection->query("SELECT busid, routeno, from_loc, to_loc FROM bus AS b WHERE b.busid = :busid", array(':busid' => $busid));
-
-	if($resultset) {
-		return $resultset->fetch();
-	}
-	else {
-		return false;
-	}
-}
-
-// Function to find a bus link from location A to 
-// location B (a bus that travels in the correct direction)
-	
-function findLink($from, $to) {
-	global $DBConnection;
-	
-	$resultset = $DBConnection->query("SELECT bid, pid, stopNo FROM stop AS s1 WHERE s1.pid = :to AND s1.bid IN ( SELECT s2.bid FROM stop AS s2 WHERE s2.pid = :from AND s2.stopNo < s1.stopNo )", array(':to' => $to, ':from' => $from));
-
-	if($resultset) {
-		return $resultset->fetch();
-	}
-	else {
-		return false;
-	}
-}
-
-// Geolocation using Google Maps
-
-function geolocate($place, $unformatted = false) {
-	global $DBConnection;
-	
-	$resultset = $DBConnection->query("SELECT p.loc, p.description FROM place AS p WHERE p.pid = :place AND p.loc IS NOT NULL", array(':place' => $place));
-
-	if($resultset) {
-		$gloc = $resultset->fetch();
-		
-		if ($unformatted) {
-			return $gloc[0];
-		}
-
-		return '<a class="gmap" title="'.$gloc[1].'" href="http://maps.google.com/maps/api/staticmap?size=320x320&markers=size:mid|color:blue|'.$gloc[0].'|&mobile=true&sensor=false"><img src="img/geo.png" id="geo"/></a>';
-	}
-	else {
-		return '';
-	}
-}
 
 //////////////////////////////////////////////////
 //						//
@@ -448,7 +361,8 @@ function tail() {
 	global $RouteOptions;
 	$query_count = $DBConnection->get_querycount();
 	$time_spent = sprintf("%2.2f seconds", $DBConnection->get_exec_time());
-
+	
+	$alternatives = DBUtils::compute_alternatives($RouteOptions);
 	if(isset($_GET['v'])) {
 		echo <<< OUT
 </div>
@@ -465,6 +379,9 @@ OUT;
 		echo <<< OUT
 <a  href="index.php"><button type="button">Go Back</button></a>
 </div>
+<div id="alternatives">
+$alternatives
+</div>
 <div id="footer">
 <p>Disclaimer: This service is still in the beta stage, so please use it at your own risk.</p>
 <p size="small"> ($query_count queries, $time_spent)</p>
@@ -478,20 +395,20 @@ OUT;
 
 // Function to display a bus row
 
-function display($busid, $from, $to, $nstops)
-{
+function display($busid, $from, $to, $nstops) {
+	global $DBConnection;
 
-	$name1 = place($from);			// halt name from
-	$name2 = place($to);			// halt name to
+	$name1 = DBUtils::place($DBConnection, $from);			// halt name from
+	$name2 = DBUtils::place($DBConnection, $to);			// halt name to
 	
 	if($to > 200 || $from > 200) {	// approximate nstops for long distances
 	
 		$nstops = 'More than '.$nstops;
 	}
 
-	if(($bus = busDet($busid)) != false) {
-		$tgeo = geolocate($to);
-		$fgeo = geolocate($from);
+	if(($bus = DBUtils::busDet($DBConnection, $busid)) != false) {
+		$tgeo = DBUtils::geolocate($DBConnection, $to);
+		$fgeo = DBUtils::geolocate($DBConnection, $from);
 
 		if(isset($_GET['v'])) {
 			echo <<< OUT
@@ -499,8 +416,8 @@ Take the <strong>$bus[1]</strong> ($bus[2] - $bus[3]) bus. Get on at $name1 ($fg
 OUT;
 		}
 		else {
-		list($from_latitude, $from_longitude) = Utils::parse_geo(geolocate($from, true));
-		list($to_latitude, $to_longitude) = Utils::parse_geo(geolocate($to, true));
+		list($from_latitude, $from_longitude) = Utils::parse_geo(DBUtils::geolocate($DBConnection, $from, true));
+		list($to_latitude, $to_longitude) = Utils::parse_geo(DBUtils::geolocate($DBConnection, $to, true));
 
 		$distance = sprintf("%2.2f", Utils::compute_distance ($from_latitude, $from_longitude, $to_latitude, $to_longitude));
 		echo <<< OUT

@@ -38,4 +38,5 @@ class Utils {
 		$elements = explode("|", $location_string);
 		return explode(",", $elements[0]);
 	}
+
 }

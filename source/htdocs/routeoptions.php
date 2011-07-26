@@ -27,7 +27,7 @@ class RouteOptions {
 			$this->lowest_cost = $total_waypoint_cost;
 		}
 	}
-
+	
 	public function get_optimal() {
 		return $this->optimal_route;
 	}
@@ -38,6 +38,10 @@ class RouteOptions {
 
 	public function get_changeover_count() {
 		return count($this->routes) - 1; // counts changeovers only, no start -> destination leg 
+	}
+
+	public function get_all_routes() {
+		return $this->routes;
 	}
 }
 

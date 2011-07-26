@@ -1,5 +1,5 @@
 <?php
-
+require('waypoint.php');
 /******************************************************************************************
 	
 	Colombo Bus Route Finder by Janith Leanage (http://janithl.blogspot.com).
@@ -11,17 +11,14 @@
 	Notes: 
 	7/26/2011: to maintain compatibility, hop count is considered equivalent to the path cost.
 	However, these two concepts are explicitly stored separately so weight can be influenced
-	by other factors and signals at a later date.
+	by other factors and signals later.
 	
 ******************************************************************************************/
 
 class Route {
 	private $start;
 	private $destination;
-	private $waypoints = array();
-	private $waypoint_order = array();
-	private $bus_order = array();
-	private $waypoint_weight = array(); // at least initially, assume weight = path cost in hops
+	private $waypoints = array();	
 	
 	public function __construct() {
 	}
@@ -34,19 +31,28 @@ class Route {
 		$this->destination = $value;
 	}	
 
-	public function push_waypoint($place_id, $bus_id, $cost) {
-		$this->waypoints[$place_id] = $cost;		
-		$this->waypoint_weight[$place_id] = $cost;
-		array_unshift($this->waypoint_order, $place_id);
-		array_unshift($this->bus_order, $bus_id);		
+	public function push_waypoint($start, $destination, $bus_id, $hop_count) {
+		$waypoint = new Waypoint();
+		$waypoint->start = $start;
+		$waypoint->destination = $destination;
+		$waypoint->bus = $bus_id;
+		$waypoint->hops = $hop_count;
+		$waypoint->weight = $hop_count;
+		$waypoint->order = count($this->waypoints) + 1;
+		array_push($this->waypoints, $waypoint);
 	}
 
 	public function get_total_cost() {
-		return array_sum(array_values($this->waypoint_weight));
+		return array_reduce($this->waypoints, "route::csum");
+	}
+	
+	private static function csum($v, $w) {
+		$v += $w->weight;
+		return $v;
 	}
 
 	public function get_waypoints() {
-		return $this->waypoint_order;
+		return $this->waypoints;
 	}
 }
 ?>
